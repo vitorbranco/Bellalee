@@ -1,4 +1,4 @@
-package com.vitorbranco.bellalee
+package com.vitorbranco.bellalee.presentation
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,9 +8,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.vitorbranco.bellalee.data.Product
+import com.vitorbranco.bellalee.data.local.Product
 import coil.load
 import coil.transform.RoundedCornersTransformation
+import com.vitorbranco.bellalee.R
 
 class ProductAdapter : ListAdapter<Product, ProductViewHolder>(ProductAdapter) {
 
@@ -32,7 +33,7 @@ class ProductAdapter : ListAdapter<Product, ProductViewHolder>(ProductAdapter) {
 
         override fun areContentsTheSame(oldItem: Product, newItem: Product): Boolean {
             return oldItem.name == newItem.name &&
-                    oldItem.imageLink == newItem.imageLink
+                    oldItem.apiFeaturedImage == newItem.apiFeaturedImage
         }
     }
 }
@@ -51,15 +52,19 @@ class ProductViewHolder(
     ) {
         tvBrand.text = capitalizeFirstLetter(product.brand)
         tvName.text = product.name
-        tvPrice.text = product.price
 
-        ivImage.load(product.imageLink) {
+        val priceWithDollarSign = "$${product.price}"
+        val apiFeaturedImageLink = "https:${product.apiFeaturedImage}"
+
+        tvPrice.text = priceWithDollarSign
+
+        ivImage.load(apiFeaturedImageLink) {
             transformations(RoundedCornersTransformation(16f))
         }
     }
 
-    private fun capitalizeFirstLetter(input: String): String {
-        if (input.isEmpty()) {
+    private fun capitalizeFirstLetter(input: String?): String? {
+        if (input.isNullOrEmpty()) {
             return input
         }
         return input.substring(0, 1).uppercase() + input.substring(1).lowercase()

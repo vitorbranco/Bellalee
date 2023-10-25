@@ -2,11 +2,12 @@ package com.vitorbranco.bellalee.presentation
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
+import android.view.View
+import android.widget.PopupMenu
+import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import com.vitorbranco.bellalee.R
 import com.vitorbranco.bellalee.data.local.Product
-import com.vitorbranco.bellalee.data.remote.ProductDto
 import com.vitorbranco.bellalee.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -17,6 +18,8 @@ class MainActivity : AppCompatActivity() {
         ProductViewModel.create()
     }
 
+    private val productsList = mutableListOf<Product>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -26,83 +29,92 @@ class MainActivity : AppCompatActivity() {
 
         val rvProducts = binding.recyclerViewProducts
         rvProducts.adapter = adapter
+        val progressBar = binding.progressBar
 
+        viewModel.loadingLiveData.observe(this) { isLoading ->
+            if (isLoading) {
+                progressBar.visibility = View.VISIBLE
+            } else {
+                progressBar.visibility = View.GONE
+            }
+        }
 
         viewModel.productLiveData.observe(this) { productListDto ->
-            val productList = productListDto.map {  productDto ->
+            productsList.clear()
+            productsList.addAll(productListDto.map { productDto ->
                 Product(
                     brand = productDto.brand,
                     name = productDto.name,
                     price = productDto.price,
                     apiFeaturedImage = productDto.apiFeaturedImage
                 )
-            }
-            productList.forEachIndexed { index, product ->
-                Log.d("Vitor API", "Product $index - ${product.name}, ${product.brand}, ${product.apiFeaturedImage}")
-            }
-            adapter.submitList(productList)
+            })
+            adapter.submitList(productsList)
         }
 
-//        val productFakeList = mutableListOf<Product>()
-//
-//        val product1 = Product(
-//            "colourpop",
-//            "Blotted Lip",
-//            "$5.50",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/047/original/open-uri20180708-4-e7idod?1531087336"
-//        )
-//        val product2 = Product(
-//            "boosh",
-//            "Lipstick",
-//            "$26.00",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/044/original/data?1531071233"
-//        )
-//        val product3 = Product(
-//            "deciem",
-//            "Serum Foundation",
-//            "$6.70",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/043/original/open-uri20180706-4-nszgw9?1530919194"
-//        )
-//        val product4 = Product(
-//            "zorah biocosmetiques",
-//            "Liquid Liner",
-//            "$0.00",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/041/original/open-uri20180630-4-1huiv9y?1530390387"
-//        )
-//        val product5 = Product(
-//            "colourpop",
-//            "Blotted Lip",
-//            "$5.50",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/047/original/open-uri20180708-4-e7idod?1531087336"
-//        )
-//        val product6 = Product(
-//            "boosh",
-//            "Lipstick",
-//            "$26.00",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/044/original/data?1531071233"
-//        )
-//        val product7 = Product(
-//            "deciem",
-//            "Serum Foundation",
-//            "$6.70",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/043/original/open-uri20180706-4-nszgw9?1530919194"
-//        )
-//        val product8 = Product(
-//            "zorah biocosmetiques",
-//            "Liquid Liner",
-//            "$0.00",
-//            "https://s3.amazonaws.com/donovanbailey/products/api_featured_images/000/001/041/original/open-uri20180630-4-1huiv9y?1530390387"
-//        )
-//
-//        productFakeList.add(product1)
-//        productFakeList.add(product2)
-//        productFakeList.add(product3)
-//        productFakeList.add(product4)
-//        productFakeList.add(product5)
-//        productFakeList.add(product6)
-//        productFakeList.add(product7)
-//        productFakeList.add(product8)
-//
-//        adapter.submitList(productFakeList)
+        val searchView = binding.searchView
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (newText != null) {
+                    val filteredList = productsList.filter { product ->
+                        product.brand?.contains(newText, ignoreCase = true) ?: false ||
+                                product.name?.contains(newText, ignoreCase = true) ?: false ||
+                                product.price?.contains(newText, ignoreCase = true) ?: false
+                    }
+                    adapter.submitList(filteredList)
+                }
+                return true
+            }
+        })
+    }
+
+    fun showFilterMenu(view: View) {
+        val popup = PopupMenu(this, view)
+        val inflater = popup.menuInflater
+        inflater.inflate(R.menu.filter_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_option_maybelline -> {
+                    val filteredList = productsList.filter { product ->
+                        product.brand?.contains("Maybelline", true) ?: false
+                    }
+                    adapter.submitList(filteredList)
+                    Toast.makeText(this, "Exibindo resultados para Maybelline", Toast.LENGTH_SHORT).show()
+                    true
+                }
+
+                R.id.menu_option_nyx -> {
+                    val filteredList = productsList.filter { product ->
+                        product.brand?.contains("Nyx", true) ?: false
+                    }
+                    adapter.submitList(filteredList)
+                    Toast.makeText(this, "Exibindo resultados para Nyx", Toast.LENGTH_SHORT).show()
+                    true
+                }
+
+                R.id.menu_option_colourpop -> {
+                    val filteredList = productsList.filter { product ->
+                        product.brand?.contains("Colourpop", true) ?: false
+                    }
+                    adapter.submitList(filteredList)
+                    Toast.makeText(this, "Exibindo resultados para Colourpop", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.menu_option_clear_filters -> {
+                    adapter.submitList(productsList)
+                    Toast.makeText(this, "Filtros resetados", Toast.LENGTH_SHORT).show()
+                    true
+                }
+
+                else -> false
+            }
+        }
+        popup.show()
     }
 }

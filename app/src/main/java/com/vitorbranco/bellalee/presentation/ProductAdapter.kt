@@ -39,7 +39,7 @@ class ProductAdapter : ListAdapter<Product, ProductViewHolder>(ProductAdapter) {
 }
 
 class ProductViewHolder(
-    private val view: View
+    view: View
 ) : RecyclerView.ViewHolder(view) {
 
     private val tvBrand = view.findViewById<TextView>(R.id.text_view_product_brand)

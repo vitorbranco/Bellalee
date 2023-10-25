@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_option_maybelline"
+        android:title="Maybelline"/>
+    <item
+        android:id="@+id/menu_option_nyx"
+        android:title="Nyx"/>
+    <item
+        android:id="@+id/menu_option_colourpop"
+        android:title="Colourpop"/>
+    <item
+        android:id="@+id/menu_option_clear_filters"
+        android:title="Limpar filtros"/>
+</menu>

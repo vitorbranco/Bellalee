@@ -19,6 +19,9 @@ class ProductViewModel(private val productService: ProductService) : ViewModel()
     private val _productLiveData = MutableLiveData<List<ProductDto>>()
     val productLiveData: LiveData<List<ProductDto>> = _productLiveData
 
+    private val _loadingLiveData = MutableLiveData<Boolean>()
+    val loadingLiveData: LiveData<Boolean> = _loadingLiveData
+
     private var retryAttempts = 0
 
     init {
@@ -29,9 +32,13 @@ class ProductViewModel(private val productService: ProductService) : ViewModel()
         val maxRetries = 3
         val initialDelay = 1000L
 
+
+
         viewModelScope.launch {
-            for(retryAttempt in 0..maxRetries) {
+            for (retryAttempt in 0..maxRetries) {
                 try {
+                    _loadingLiveData.value = true
+
                     val productList = productService.fetchProducts()
                     _productLiveData.value = productList
 
@@ -46,6 +53,8 @@ class ProductViewModel(private val productService: ProductService) : ViewModel()
                     }
                 } catch (ex: Exception) {
                     ex.printStackTrace()
+                } finally {
+                    _loadingLiveData.value = false
                 }
             }
         }
